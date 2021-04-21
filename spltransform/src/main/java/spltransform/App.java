@@ -11,7 +11,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class App {
 
 	private static final String DEBUT_ANNOTATION_NON_ESPACER = "//";
@@ -24,7 +23,7 @@ public class App {
 	private static List<String> lignesTotalsFichier = null;
 
 	public static void main(String[] args) {
-	
+
 		if (args.length > 0) {
 			inputDirectory = args[0];
 			App app = new App();
@@ -39,32 +38,13 @@ public class App {
 		this.lireDossier(dossier);
 	}
 
-	public void ecrireFichiersResultat(String output,List<String>lignesFichier) {
-		PrintWriter writer;
-		try {
-			writer = new PrintWriter(output, "UTF-8");
-			for(String ligne:lignesFichier) {
-				writer.println(ligne);
-			}
-			writer.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
-
 	/****************************
 	 * Lecture dossier
 	 ***************************************/
 
-	private void  lireDossier(File dossier) {
+	private void lireDossier(File dossier) {
 		String nomDeFichier;
 		List<String> lignesFichier = null;
-
 
 		for (File fichier : dossier.listFiles()) {
 			if (!fichier.isDirectory()) {
@@ -74,59 +54,13 @@ public class App {
 					System.out.println(nomFichier);
 					nomDeFichier = fichier.getAbsolutePath();
 					lignesFichier = this.lireFichier(nomDeFichier);
-					lignesFichier=traitementDuFichier(lignesFichier);
-					ecrireFichiersResultat(nomDeFichier,lignesFichier);
-				}
-			} 
-		}
-	}
-
-	private List<String> traitementDuFichier(List<String> lignesFichier) {
-		List<String>newList = new ArrayList<String>();
-		String [] words;
-		String [] words2;
-		for(String ligne :lignesFichier) {
-			if(ligne.contains("/*if[")) {
-				words=ligne.split("\\]\\*/");
-				newList.add(words[0].replaceAll("/\\*if\\[", "//#if "));
-				if(words.length>1) {
-					words2 = words[1].split("/\\*end\\[");
-					newList.add(words2[0]);
-					if(words2.length>1) {
-						words2[1]="//#endif ";
-						newList.add(words2[1]);
-					}
-				}
-			}else {
-				if(ligne.contains("/*end[")) {
-					words = ligne.split("/\\*end\\[");
-					if(words.length==1) {
-						words[0]="//#endif ";
-						newList.add(words[0]);
-					}else {
-						newList.add(words[0]);
-						if(words.length>1) {
-							words[1]="//#endif ";
-							newList.add(words[1]);
-						}
-					}
-				}else {
-					newList.add(ligne);
+					lignesFichier = this.traitementDuFichier(lignesFichier);
+					this.ecrireFichiersResultat(nomDeFichier, lignesFichier);
 				}
 			}
 		}
-		return newList;
 	}
 
-	private boolean estFichierVoulu(File fichier) {
-
-		final String extensionFichierVoulu = ".java";
-		final int indiceFinFichier = fichier.getName().length();
-		final int indiceExtensionFichier = indiceFinFichier - extensionFichierVoulu.length();
-		final String fichierExtension = fichier.getName().substring(indiceExtensionFichier, indiceFinFichier);
-
-		return fichierExtension.equals(extensionFichierVoulu);
-	}
 	/****************************
 	 * Lecture fichier
 	 ***************************************/
@@ -144,9 +78,74 @@ public class App {
 			iReader.close();
 			fileReader.close();
 		} catch (Exception e) {
+			System.out.println("La lecture du dossier c'est mal passé : " + e.getMessage());
 			e.printStackTrace();
 		}
 		return contenuFichier;
+	}
+
+	private List<String> traitementDuFichier(List<String> lignesFichier) {
+		List<String> newList = new ArrayList<String>();
+		String[] words;
+		String[] words2;
+		for (String ligne : lignesFichier) {
+			if (ligne.contains("/*if[")) {
+				words = ligne.split("\\]\\*/");
+				newList.add(words[0].replaceAll("/\\*if\\[", "//#if "));
+				if (words.length > 1) {
+					words2 = words[1].split("/\\*end\\[");
+					newList.add(words2[0]);
+					if (words2.length > 1) {
+						words2[1] = "//#endif ";
+						newList.add(words2[1]);
+					}
+				}
+			} else {
+				if (ligne.contains("/*end[")) {
+					words = ligne.split("/\\*end\\[");
+					if (words.length == 1) {
+						words[0] = "//#endif ";
+						newList.add(words[0]);
+					} else {
+						newList.add(words[0]);
+						if (words.length > 1) {
+							words[1] = "//#endif ";
+							newList.add(words[1]);
+						}
+					}
+				} else {
+					newList.add(ligne);
+				}
+			}
+		}
+		return newList;
+	}
+
+	public void ecrireFichiersResultat(String output, List<String> lignesFichier) {
+		PrintWriter writer;
+		try {
+			writer = new PrintWriter(output, "UTF-8");
+			for (String ligne : lignesFichier) {
+				writer.println(ligne);
+			}
+			writer.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("Le fichier de sortie n'a pas été crée : " + e.getMessage());
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			System.out.println("L'encodage de sortie n'a pas été reconnu : " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	private boolean estFichierVoulu(File fichier) {
+
+		final String extensionFichierVoulu = ".java";
+		final int indiceFinFichier = fichier.getName().length();
+		final int indiceExtensionFichier = indiceFinFichier - extensionFichierVoulu.length();
+		final String fichierExtension = fichier.getName().substring(indiceExtensionFichier, indiceFinFichier);
+
+		return fichierExtension.equals(extensionFichierVoulu);
 	}
 
 }
